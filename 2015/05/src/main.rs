@@ -5,10 +5,10 @@ use std::io::{BufRead, BufReader};
 use std::string::String;
 
 fn part1_rule(line: &String) -> bool {
-    let vowels = HashSet::from(['a', 'e', 'i', 'o', 'u']);
+    let vowels = HashSet::from(['a', 'e', 'i', 'o', 'u']); // TODO: Make static somehow
     let vowel_count = line.chars().filter(|c| vowels.contains(c)).count() >= 3;
     let two_in_a_row = line.chars().zip(line.chars().skip(1)).any(|x| x.0 == x.1);
-    let invalid_pattern = Regex::new(r"ab|cd|pq|xy").unwrap();
+    let invalid_pattern = Regex::new(r"ab|cd|pq|xy").unwrap(); // TODO: Make static somehow
     let invalid = invalid_pattern.is_match(&line);
 
     vowel_count && two_in_a_row && !invalid
