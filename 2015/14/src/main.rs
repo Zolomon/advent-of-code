@@ -52,13 +52,12 @@ fn main() {
     let fastest_raindeer = raindeers
         .iter()
         .map(|x| {
-            let result = (0..x.duration)
+            (0..x.duration)
                 .map(|_| x.speed)
                 .chain((0..(x.rest_at)).map(|_| 0))
                 .cycle()
                 .take(n)
-                .sum::<u32>();
-            result
+                .sum::<u32>()
         })
         .max()
         .unwrap();
