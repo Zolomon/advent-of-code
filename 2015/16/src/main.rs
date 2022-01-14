@@ -1,6 +1,4 @@
 use regex::Regex;
-use regex::RegexSet;
-use std::cmp::max;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
@@ -9,12 +7,6 @@ use std::io::BufReader;
 
 #[macro_use]
 extern crate lazy_static;
-
-#[derive(std::cmp::PartialEq)]
-enum Part {
-    One,
-    Two,
-}
 
 fn parse(line: String) -> HashMap<&'static str, i32> {
     lazy_static! {
@@ -64,16 +56,20 @@ fn parse(line: String) -> HashMap<&'static str, i32> {
     captures
 }
 
-fn find_sue<'a, F: FnMut(&'a HashSet<&str>) -> Box<dyn FnMut(&(&str, i32)) -> bool + 'a>>(
+fn find_sue<'set, Filter, Predicate>(
     sue: &HashMap<&str, i32>,
     lines: &Vec<HashMap<&str, i32>>,
-    not_in: &'a HashSet<&'a str>,
-    mut filter: F,
-) -> (Option<i32>, usize) {
+    not_in: &'set HashSet<&'set str>,
+    mut filter: Filter,
+) -> (Option<i32>, usize)
+where
+    Filter: FnMut(&'set HashSet<&str>) -> Predicate,
+    Predicate: FnMut(&(&str, i32)) -> bool,
+{
     let mut id = None;
     let mut max_count = 0;
     for line in lines {
-        let mut l = line
+        let l = line
             .iter()
             .map(|(k, v)| (*k, v.clone()))
             .filter(filter(&not_in))
@@ -115,11 +111,11 @@ fn main() {
         ("perfumes", 1),
     ]);
     let not_in: HashSet<&str> = HashSet::from(["trees", "cats", "pomeranians", "goldfish"]);
-    let (part1, max_count) = find_sue(&sue, &lines, &not_in, |_| {
-        Box::new(move |(k, _): &(&str, i32)| -> bool { *k != "sue" })
+    let (part1, _) = find_sue(&sue, &lines, &not_in, |_| {
+        move |(k, _): &(&str, i32)| -> bool { *k != "sue" }
     });
-    let (part2, max_count) = find_sue(&sue, &lines, &not_in, |other_not_in: &HashSet<&str>| {
-        Box::new(move |(k, _): &(&str, i32)| -> bool { *k != "sue" && !other_not_in.contains(k) })
+    let (part2, _) = find_sue(&sue, &lines, &not_in, |not_in: &HashSet<&str>| {
+        move |(k, _): &(&str, i32)| -> bool { *k != "sue" && !not_in.contains(k) }
     });
 
     println!("part1: {}", part1.unwrap());
