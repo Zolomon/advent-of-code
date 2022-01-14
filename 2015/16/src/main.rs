@@ -64,27 +64,20 @@ fn parse(line: String) -> HashMap<&'static str, i32> {
     captures
 }
 
-fn find_sue(
+fn find_sue<'a, F: FnMut(&'a HashSet<&str>) -> Box<dyn FnMut(&(&str, i32)) -> bool + 'a>>(
     sue: &HashMap<&str, i32>,
     lines: &Vec<HashMap<&str, i32>>,
-    part: Part,
+    not_in: &'a HashSet<&'a str>,
+    mut filter: F,
 ) -> (Option<i32>, usize) {
     let mut id = None;
     let mut max_count = 0;
-    let not_in = HashSet::from(["trees", "cats", "pomeranians", "goldfish"]);
     for line in lines {
         let mut l = line
             .iter()
             .map(|(k, v)| (*k, v.clone()))
-            .filter(|(k, _)| *k != "sue")
+            .filter(filter(&not_in))
             .collect::<HashSet<_>>();
-        if part == Part::Two {
-            l = l
-                .iter()
-                .map(|(k, v)| (*k, v.clone()))
-                .filter(|(k, _)| !not_in.contains(k))
-                .collect::<HashSet<_>>();
-        }
         let s = sue
             .iter()
             .map(|(k, v)| (*k, v.clone()))
@@ -121,8 +114,13 @@ fn main() {
         ("cars", 2),
         ("perfumes", 1),
     ]);
-    let (part1, max_count) = find_sue(&sue, &lines, Part::One);
-    let (part2, max_count) = find_sue(&sue, &lines, Part::Two);
+    let not_in: HashSet<&str> = HashSet::from(["trees", "cats", "pomeranians", "goldfish"]);
+    let (part1, max_count) = find_sue(&sue, &lines, &not_in, |_| {
+        Box::new(move |(k, _): &(&str, i32)| -> bool { *k != "sue" })
+    });
+    let (part2, max_count) = find_sue(&sue, &lines, &not_in, |other_not_in: &HashSet<&str>| {
+        Box::new(move |(k, _): &(&str, i32)| -> bool { *k != "sue" && !other_not_in.contains(k) })
+    });
 
     println!("part1: {}", part1.unwrap());
     println!("part2: {}", part2.unwrap());
